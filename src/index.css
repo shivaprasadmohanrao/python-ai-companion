@@ -94,13 +94,14 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+
   .syn-comment { color: hsl(215 15% 50%); font-style: italic; }
   .syn-string { color: hsl(35 92% 55%); }
   .syn-keyword { color: hsl(160 84% 50%); }
   .syn-builtin { color: hsl(200 80% 65%); }
   .syn-decorator { color: hsl(280 60% 65%); }
   .syn-number { color: hsl(35 80% 60%); }
-}
 
   .card-glow {
     box-shadow: var(--shadow-card);

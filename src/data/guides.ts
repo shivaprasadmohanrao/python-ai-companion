@@ -1,6 +1,7 @@
 import { 
   Code, Terminal, Zap, Globe, Cpu, Package, BookOpen, 
   Brain, Mic, Shield, Layers, GitBranch, Puzzle, FlaskConical,
+  FileType, Database, Bug, FolderOpen, Workflow, Hash,
   type LucideIcon 
 } from "lucide-react";
 
@@ -2012,6 +2013,1070 @@ async def fetch_all():
         options: ["They compress data", "They produce values lazily, one at a time", "They use C extensions", "They cache results"],
         answer: 1,
         explanation: "Generators yield one value at a time instead of creating the entire collection in memory. A generator for 1M items uses ~100 bytes vs ~8MB for a list."
+      }
+    ]
+  },
+  {
+    id: "type-hints",
+    title: "Type Hints & Protocols",
+    description: "Static typing in Python — annotations, generics, Protocol, TypeVar, and mypy",
+    icon: FileType,
+    tier: "Intermediate",
+    tags: ["typing", "Protocols", "Generics", "mypy"],
+    sections: [
+      {
+        title: "Why Type Hints Matter",
+        content: "Type hints don't change how Python runs, but they catch bugs **before** runtime. Essential for large codebases and AI systems.",
+        code: `from typing import Optional, Union, Any
+
+# Basic annotations
+def greet(name: str, times: int = 1) -> str:
+    return (f"Hello, {name}! " * times).strip()
+
+# Optional = might be None
+def find_user(user_id: int) -> Optional[dict]:
+    users = {1: {"name": "Alice"}}
+    return users.get(user_id)  # returns dict or None
+
+# Union = one of several types
+def process(data: Union[str, bytes]) -> str:
+    if isinstance(data, bytes):
+        return data.decode("utf-8")
+    return data
+
+# Python 3.10+ pipe syntax
+def process_v2(data: str | bytes | None) -> str:
+    if data is None:
+        return ""
+    if isinstance(data, bytes):
+        return data.decode()
+    return data
+
+# Collections
+from typing import List, Dict, Tuple, Set
+
+def analyze(scores: list[float]) -> dict[str, float]:
+    return {
+        "mean": sum(scores) / len(scores),
+        "max": max(scores),
+        "min": min(scores),
+    }
+
+# Run mypy: mypy your_file.py
+# It catches: wrong types, missing returns, None errors`,
+        tip: "🧠 Type hints are like lane markings on a road — they don't physically stop you from crossing, but they prevent accidents."
+      },
+      {
+        title: "Generics & TypeVar",
+        content: "Generics let you write functions and classes that work with **any type** while keeping type safety.",
+        code: `from typing import TypeVar, Generic, Sequence
+
+T = TypeVar("T")  # A placeholder for "any type"
+
+# Generic function
+def first_item(items: Sequence[T]) -> T:
+    return items[0]
+
+# mypy knows the return type!
+name = first_item(["Alice", "Bob"])      # str
+number = first_item([1, 2, 3])           # int
+
+# Generic class
+class Stack(Generic[T]):
+    def __init__(self) -> None:
+        self._items: list[T] = []
+    
+    def push(self, item: T) -> None:
+        self._items.append(item)
+    
+    def pop(self) -> T:
+        return self._items.pop()
+    
+    def peek(self) -> T:
+        return self._items[-1]
+
+int_stack: Stack[int] = Stack()
+int_stack.push(42)
+# int_stack.push("hello")  # mypy ERROR! ✅
+
+# Bounded TypeVar — restrict to certain types
+from typing import Callable
+
+Numeric = TypeVar("Numeric", int, float)
+
+def add(a: Numeric, b: Numeric) -> Numeric:
+    return a + b
+
+add(1, 2)      # OK
+add(1.5, 2.5)  # OK
+# add("a", "b") # mypy ERROR!`,
+        tip: "🧠 TypeVar is like a blank in mad-libs — it gets filled in when you use the function. Stack[int] fills T with int everywhere."
+      },
+      {
+        title: "Protocol — Structural Typing",
+        content: "Protocol enables **duck typing with type safety**. If it walks like a duck and quacks like a duck, mypy agrees it's a duck.",
+        code: `from typing import Protocol, runtime_checkable
+
+# Define what interface you expect
+class Drawable(Protocol):
+    def draw(self) -> str: ...
+
+class Resizable(Protocol):
+    def resize(self, factor: float) -> None: ...
+
+# Classes don't need to inherit Protocol!
+class Circle:
+    def __init__(self, radius: float):
+        self.radius = radius
+    
+    def draw(self) -> str:
+        return f"⭕ Circle(r={self.radius})"
+    
+    def resize(self, factor: float) -> None:
+        self.radius *= factor
+
+class Square:
+    def __init__(self, side: float):
+        self.side = side
+    
+    def draw(self) -> str:
+        return f"⬜ Square(s={self.side})"
+
+# This function accepts ANY object with a draw() method
+def render(shape: Drawable) -> None:
+    print(shape.draw())
+
+render(Circle(5))   # ✅ Circle has draw()
+render(Square(3))   # ✅ Square has draw()
+
+# runtime_checkable — check at runtime too
+@runtime_checkable
+class Sendable(Protocol):
+    def send(self, message: str) -> bool: ...
+
+class EmailSender:
+    def send(self, message: str) -> bool:
+        print(f"📧 {message}")
+        return True
+
+sender = EmailSender()
+print(isinstance(sender, Sendable))  # True!`,
+        tip: "🧠 Protocol = 'I don't care WHO you are, just that you CAN do this.' It's Python's version of Go interfaces."
+      }
+    ],
+    quiz: [
+      {
+        question: "What does Optional[str] mean?",
+        options: ["A string that might be empty", "str or None", "A string with a default", "A mutable string"],
+        answer: 1,
+        explanation: "Optional[str] means the value can be a str or None. It's shorthand for Union[str, None]."
+      },
+      {
+        question: "What is Protocol used for?",
+        options: ["Network protocols", "Structural (duck) typing with type safety", "Encryption", "Multi-threading"],
+        answer: 1,
+        explanation: "Protocol enables structural typing — any class with matching methods satisfies the Protocol, no inheritance needed."
+      }
+    ]
+  },
+  {
+    id: "functional-python",
+    title: "Functional Programming in Python",
+    description: "map, filter, reduce, closures, partial, functools, and immutable data patterns",
+    icon: Workflow,
+    tier: "Intermediate",
+    tags: ["Functional", "map/filter", "Closures", "Immutable"],
+    sections: [
+      {
+        title: "map, filter, reduce",
+        content: "Functional tools transform data without mutating it. Think of data flowing through a **pipeline** of transformations.",
+        code: `from functools import reduce
+
+numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+# map — transform each element
+doubled = list(map(lambda x: x * 2, numbers))
+# [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+
+# filter — keep elements matching condition
+evens = list(filter(lambda x: x % 2 == 0, numbers))
+# [2, 4, 6, 8, 10]
+
+# reduce — combine all elements into one value
+total = reduce(lambda acc, x: acc + x, numbers)
+# 55 (same as sum(numbers))
+
+# Chaining (pipeline style)
+result = reduce(
+    lambda acc, x: acc + x,
+    map(lambda x: x ** 2,
+        filter(lambda x: x % 2 == 0, numbers)
+    )
+)
+# Sum of squares of even numbers: 4+16+36+64+100 = 220
+
+# Pythonic alternative: list comprehensions
+result_v2 = sum(x ** 2 for x in numbers if x % 2 == 0)
+# Same result, more readable!
+
+# Real-world: Process API responses
+users = [
+    {"name": "Alice", "age": 30, "active": True},
+    {"name": "Bob", "age": 25, "active": False},
+    {"name": "Carol", "age": 35, "active": True},
+]
+
+active_names = list(map(
+    lambda u: u["name"].upper(),
+    filter(lambda u: u["active"], users)
+))
+# ['ALICE', 'CAROL']`,
+        tip: "🧠 map = 'change each item.' filter = 'keep some items.' reduce = 'combine into one.' Like a factory assembly line."
+      },
+      {
+        title: "Closures & Higher-Order Functions",
+        content: "A closure is a function that **remembers** variables from its enclosing scope. Power tool for creating specialized functions.",
+        code: `# Closure — function factory
+def make_multiplier(factor):
+    def multiply(x):
+        return x * factor  # 'factor' is remembered!
+    return multiply
+
+double = make_multiplier(2)
+triple = make_multiplier(3)
+print(double(5))   # 10
+print(triple(5))   # 15
+
+# Closure for caching (memoization)
+def memoize(func):
+    cache = {}
+    def wrapper(*args):
+        if args not in cache:
+            cache[args] = func(*args)
+        return cache[args]
+    return wrapper
+
+@memoize
+def fibonacci(n):
+    if n < 2:
+        return n
+    return fibonacci(n - 1) + fibonacci(n - 2)
+
+print(fibonacci(100))  # Instant! Without memo: heat death of universe
+
+# functools.partial — pre-fill arguments
+from functools import partial
+
+def power(base, exponent):
+    return base ** exponent
+
+square = partial(power, exponent=2)
+cube = partial(power, exponent=3)
+print(square(5))  # 25
+print(cube(3))    # 27
+
+# functools.lru_cache — built-in memoization
+from functools import lru_cache
+
+@lru_cache(maxsize=128)
+def expensive_api_call(user_id: int) -> dict:
+    # Only called once per user_id!
+    print(f"Fetching user {user_id}...")
+    return {"id": user_id, "name": f"User_{user_id}"}
+
+expensive_api_call(1)  # Fetching user 1...
+expensive_api_call(1)  # Returns cached result (no print)`,
+        tip: "🧠 A closure is like a backpack — the inner function carries variables from where it was created, even after the outer function is gone."
+      },
+      {
+        title: "Immutable Data Patterns",
+        content: "Immutable data prevents bugs caused by accidental mutations. Critical for concurrent and functional code.",
+        code: `from dataclasses import dataclass
+from typing import NamedTuple
+
+# NamedTuple — immutable data container
+class Point(NamedTuple):
+    x: float
+    y: float
+
+p = Point(3.0, 4.0)
+# p.x = 5.0  # ERROR! Immutable ✅
+
+# Create modified copy
+p2 = p._replace(x=5.0)
+print(p2)  # Point(x=5.0, y=4.0)
+
+# Frozen dataclass — immutable with more features
+@dataclass(frozen=True)
+class Config:
+    host: str
+    port: int
+    debug: bool = False
+
+config = Config(host="localhost", port=8080)
+# config.port = 9090  # ERROR! Frozen ✅
+
+# Defensive copying
+original = [1, 2, [3, 4]]
+import copy
+shallow = original.copy()       # inner lists still shared!
+deep = copy.deepcopy(original)  # fully independent copy
+
+original[2].append(5)
+print(shallow[2])  # [3, 4, 5] — oops, shared!
+print(deep[2])     # [3, 4] — safe! ✅
+
+# frozenset — immutable set (can be dict key!)
+permissions = frozenset(["read", "write"])
+role_map = {permissions: "editor"}`,
+        tip: "🧠 Mutable = whiteboard (anyone can erase and change). Immutable = printed book (create a new edition for changes)."
+      }
+    ],
+    quiz: [
+      {
+        question: "What does a closure 'close over'?",
+        options: ["Files", "Network connections", "Variables from enclosing scope", "Class instances"],
+        answer: 2,
+        explanation: "A closure remembers variables from the enclosing function's scope, even after that function has returned."
+      },
+      {
+        question: "What's the Pythonic alternative to map + filter chains?",
+        options: ["for loops", "List comprehensions", "while loops", "recursion"],
+        answer: 1,
+        explanation: "List/generator comprehensions are more readable than chained map/filter calls in Python."
+      }
+    ]
+  },
+  {
+    id: "file-io-serialization",
+    title: "File I/O & Data Serialization",
+    description: "Reading/writing files, JSON, CSV, pickle, YAML, and working with APIs and data pipelines",
+    icon: FolderOpen,
+    tier: "Beginner → Intermediate",
+    tags: ["Files", "JSON", "CSV", "Serialization"],
+    sections: [
+      {
+        title: "File Operations with pathlib",
+        content: "Modern Python file operations use **pathlib** instead of os.path. It's cleaner, safer, and more Pythonic.",
+        code: `from pathlib import Path
+
+# Create paths
+home = Path.home()
+project = Path("my_project")
+config_file = project / "config" / "settings.json"
+
+# Create directories
+(project / "data").mkdir(parents=True, exist_ok=True)
+
+# Read/write text
+config_file.parent.mkdir(parents=True, exist_ok=True)
+config_file.write_text('{"debug": true}')
+content = config_file.read_text()
+
+# Read/write bytes (images, binary)
+image_path = project / "logo.png"
+# image_path.write_bytes(b"\\x89PNG...")
+# data = image_path.read_bytes()
+
+# Iterate files
+for py_file in project.rglob("*.py"):
+    print(f"Found: {py_file}")
+
+# File info
+if config_file.exists():
+    print(f"Size: {config_file.stat().st_size} bytes")
+    print(f"Suffix: {config_file.suffix}")    # .json
+    print(f"Stem: {config_file.stem}")          # settings
+
+# Context manager (auto-close)
+with open(config_file) as f:
+    for line_number, line in enumerate(f, 1):
+        print(f"{line_number}: {line.strip()}")`,
+        tip: "🧠 pathlib.Path is like GPS — it knows about your filesystem and builds paths correctly for any OS (/ works everywhere, even Windows)."
+      },
+      {
+        title: "JSON — The Universal Data Format",
+        content: "JSON is how APIs communicate. Every Python developer must master reading, writing, and transforming JSON.",
+        code: `import json
+from datetime import datetime
+from dataclasses import dataclass, asdict
+
+# Basic read/write
+data = {"name": "Alice", "scores": [95, 87, 92]}
+
+# To string
+json_str = json.dumps(data, indent=2)
+print(json_str)
+
+# From string
+parsed = json.loads(json_str)
+print(parsed["name"])  # Alice
+
+# To/from file
+with open("data.json", "w") as f:
+    json.dump(data, f, indent=2)
+
+with open("data.json") as f:
+    loaded = json.load(f)
+
+# Custom serialization (datetime, dataclass, etc.)
+class CustomEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        if hasattr(obj, '__dict__'):
+            return obj.__dict__
+        return super().default(obj)
+
+event = {
+    "name": "Launch",
+    "time": datetime.now(),
+}
+print(json.dumps(event, cls=CustomEncoder, indent=2))
+
+# Dataclass to JSON
+@dataclass
+class User:
+    name: str
+    email: str
+    age: int
+
+user = User("Bob", "bob@example.com", 30)
+user_json = json.dumps(asdict(user))
+print(user_json)
+
+# JSON from API response (common pattern)
+# import httpx
+# response = httpx.get("https://api.example.com/users")
+# users = response.json()  # auto-parses JSON!`,
+        tip: "🧠 json.dumps = 'dump to string.' json.loads = 'load from string.' The 's' stands for string. Without 's' = file."
+      },
+      {
+        title: "CSV, Pickle & Other Formats",
+        content: "Different data formats for different needs. CSV for spreadsheets, pickle for Python objects, YAML for config.",
+        code: `import csv
+import pickle
+
+# --- CSV ---
+# Write CSV
+data = [
+    {"name": "Alice", "score": 95},
+    {"name": "Bob", "score": 87},
+]
+
+with open("scores.csv", "w", newline="") as f:
+    writer = csv.DictWriter(f, fieldnames=["name", "score"])
+    writer.writeheader()
+    writer.writerows(data)
+
+# Read CSV
+with open("scores.csv") as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        print(f"{row['name']}: {row['score']}")
+
+# --- PICKLE (Python-only serialization) ---
+# ⚠️ Never unpickle untrusted data!
+complex_data = {
+    "model": [1, 2, 3],
+    "weights": {0: 0.5, 1: 0.3},
+    "config": {"layers": 12},
+}
+
+# Save
+with open("model.pkl", "wb") as f:
+    pickle.dump(complex_data, f)
+
+# Load
+with open("model.pkl", "rb") as f:
+    loaded = pickle.load(f)
+
+# --- ENVIRONMENT VARIABLES ---
+import os
+from dotenv import load_dotenv
+
+load_dotenv()  # loads .env file
+api_key = os.getenv("API_KEY", "default_key")
+debug = os.getenv("DEBUG", "false").lower() == "true"
+
+# .env file:
+# API_KEY=sk-abc123
+# DEBUG=true
+# DATABASE_URL=postgresql://user:pass@localhost/db`,
+        tip: "🧠 JSON = universal (any language). Pickle = Python-only (preserves Python objects exactly). CSV = spreadsheet-friendly."
+      }
+    ],
+    quiz: [
+      {
+        question: "What's the difference between json.dump and json.dumps?",
+        options: ["dump is faster", "dump writes to file, dumps returns string", "dumps is deprecated", "No difference"],
+        answer: 1,
+        explanation: "json.dump writes to a file object. json.dumps returns a string. The 's' = string."
+      }
+    ]
+  },
+  {
+    id: "logging-debugging",
+    title: "Logging & Debugging",
+    description: "Professional logging, pdb debugger, profiling, and error tracking for production apps",
+    icon: Bug,
+    tier: "Intermediate",
+    tags: ["logging", "pdb", "Profiling", "Debugging"],
+    sections: [
+      {
+        title: "Professional Logging",
+        content: "Never use `print()` for debugging in production. The **logging** module gives you levels, formatting, and output control.",
+        code: `import logging
+
+# Basic setup
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+
+logger = logging.getLogger(__name__)
+
+# Log levels (in order of severity)
+logger.debug("Variable x = 42")        # Development details
+logger.info("User logged in")          # Normal operations  
+logger.warning("Disk 80% full")        # Something unexpected
+logger.error("Database connection failed")  # Something broke
+logger.critical("System shutting down") # Total failure
+
+# Structured logging with extra context
+logger.info(
+    "Order placed",
+    extra={"order_id": "ORD-123", "amount": 99.99}
+)
+
+# Exception logging (captures traceback!)
+try:
+    result = 1 / 0
+except ZeroDivisionError:
+    logger.exception("Division failed!")  # auto-includes traceback
+
+# Logger per module (best practice)
+# utils/helpers.py
+helper_logger = logging.getLogger("myapp.utils.helpers")
+
+# Configure different handlers
+file_handler = logging.FileHandler("app.log")
+file_handler.setLevel(logging.WARNING)  # only warnings+ to file
+
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.DEBUG)  # everything to console
+
+logger.addHandler(file_handler)
+logger.addHandler(console_handler)`,
+        tip: "🧠 Logging levels are like a volume dial: DEBUG=whisper, INFO=talk, WARNING=shout, ERROR=alarm, CRITICAL=siren."
+      },
+      {
+        title: "Debugging with pdb",
+        content: "pdb is Python's built-in debugger. Drop a **breakpoint()** anywhere to pause and inspect live state.",
+        code: `# Method 1: breakpoint() (Python 3.7+)
+def calculate_discount(price, discount_percent):
+    subtotal = price * (1 - discount_percent / 100)
+    tax = subtotal * 0.08
+    breakpoint()  # ← execution pauses here!
+    # In pdb console:
+    #   p subtotal    → print variable
+    #   p price       → 99.99
+    #   n             → next line
+    #   s             → step into function
+    #   c             → continue running
+    #   l             → list source code
+    #   q             → quit debugger
+    total = subtotal + tax
+    return total
+
+# Method 2: Post-mortem debugging
+# python -m pdb your_script.py
+# When it crashes, you're dropped into pdb at the crash site!
+
+# Method 3: Conditional breakpoint
+def process_items(items):
+    for i, item in enumerate(items):
+        if i == 50:
+            breakpoint()  # only stop on 50th item
+        transform(item)
+
+# pdb commands cheat sheet:
+# p expr    → print expression
+# pp expr   → pretty-print
+# w         → show call stack (where am I?)
+# u         → go up one frame
+# d         → go down one frame
+# b 42      → set breakpoint at line 42
+# cl        → clear breakpoints
+# !x = 10   → modify variable live
+
+# Pro tip: Use ipdb for a better experience
+# pip install ipdb
+# import ipdb; ipdb.set_trace()`,
+        tip: "🧠 breakpoint() is like pausing a movie — you can look at every frame (variable), rewind (up/down stack), and play (continue)."
+      },
+      {
+        title: "Profiling & Performance",
+        content: "Find bottlenecks in your code. Profile before optimizing — don't guess where the slowdown is.",
+        code: `import time
+import cProfile
+from functools import wraps
+
+# Simple timer decorator
+def timer(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.perf_counter()
+        result = func(*args, **kwargs)
+        elapsed = time.perf_counter() - start
+        print(f"⏱️ {func.__name__}: {elapsed:.4f}s")
+        return result
+    return wrapper
+
+@timer
+def slow_function():
+    total = sum(i ** 2 for i in range(1_000_000))
+    return total
+
+# cProfile — detailed profiling
+def profile_me():
+    data = [i ** 2 for i in range(100000)]
+    sorted_data = sorted(data, reverse=True)
+    return sum(sorted_data[:100])
+
+# Run: python -m cProfile -s cumtime your_script.py
+cProfile.run("profile_me()")
+
+# Memory profiling
+# pip install memory-profiler
+# @profile  ← add this decorator
+# python -m memory_profiler your_script.py
+
+# Line profiling
+# pip install line-profiler
+# @profile
+# kernprof -l -v your_script.py
+
+# Quick benchmarking
+import timeit
+
+time_list = timeit.timeit(
+    "[x**2 for x in range(1000)]",
+    number=10000
+)
+time_gen = timeit.timeit(
+    "list(x**2 for x in range(1000))",
+    number=10000
+)
+print(f"List comp: {time_list:.4f}s")
+print(f"Generator: {time_gen:.4f}s")`,
+        tip: "🧠 'Premature optimization is the root of all evil' — Donald Knuth. Profile first, then optimize the actual bottleneck."
+      }
+    ],
+    quiz: [
+      {
+        question: "What does logger.exception() do that logger.error() doesn't?",
+        options: ["Exits the program", "Auto-includes the traceback", "Sends an email", "Creates a file"],
+        answer: 1,
+        explanation: "logger.exception() logs the error message AND the full traceback automatically. Use it inside except blocks."
+      },
+      {
+        question: "What's the first step before optimizing code?",
+        options: ["Rewrite in C", "Profile to find bottlenecks", "Add more threads", "Use less memory"],
+        answer: 1,
+        explanation: "Always profile first. You might be optimizing code that isn't actually the bottleneck."
+      }
+    ]
+  },
+  {
+    id: "data-structures-algorithms",
+    title: "Data Structures & Algorithms",
+    description: "collections, heapq, bisect, Big-O, and essential algorithms every developer needs",
+    icon: Hash,
+    tier: "Intermediate → Advanced",
+    tags: ["collections", "Big-O", "Algorithms", "Performance"],
+    sections: [
+      {
+        title: "Python's Secret Weapons: collections",
+        content: "The **collections** module has specialized data structures that solve common problems elegantly.",
+        code: `from collections import (
+    defaultdict, Counter, deque, OrderedDict, namedtuple
+)
+
+# Counter — count things instantly
+words = ["apple", "banana", "apple", "cherry", "banana", "apple"]
+count = Counter(words)
+print(count)                # Counter({'apple': 3, 'banana': 2, 'cherry': 1})
+print(count.most_common(2)) # [('apple', 3), ('banana', 2)]
+
+# Counter arithmetic!
+inventory = Counter(apples=5, oranges=3)
+sold = Counter(apples=2, oranges=1)
+remaining = inventory - sold
+print(remaining)  # Counter({'apples': 3, 'oranges': 2})
+
+# defaultdict — no more KeyError
+word_groups = defaultdict(list)
+for word in ["hello", "hi", "hey", "world", "wonder"]:
+    word_groups[word[0]].append(word)
+# {'h': ['hello', 'hi', 'hey'], 'w': ['world', 'wonder']}
+
+# deque — fast append/pop from both ends
+queue = deque(maxlen=5)
+queue.append("task1")
+queue.append("task2")
+queue.appendleft("urgent_task")  # O(1)!
+print(queue.popleft())  # urgent_task
+
+# Sliding window with deque
+from collections import deque
+def moving_average(data, window_size):
+    window = deque(maxlen=window_size)
+    averages = []
+    for value in data:
+        window.append(value)
+        averages.append(sum(window) / len(window))
+    return averages
+
+prices = [100, 102, 101, 105, 110, 108]
+print(moving_average(prices, 3))`,
+        tip: "🧠 Counter = automatic tally sheet. defaultdict = dict that creates missing keys. deque = double-ended queue (fast on both sides)."
+      },
+      {
+        title: "Big-O Complexity — What Actually Matters",
+        content: "Big-O tells you how code **scales**. The difference between O(n) and O(n²) is the difference between 1 second and 11 days for 1M items.",
+        code: `# O(1) — Constant: dict/set lookup
+users = {"alice": 1, "bob": 2}
+user = users["alice"]           # O(1) — instant, always!
+exists = "alice" in users        # O(1) — sets and dicts use hash tables
+
+# O(log n) — Logarithmic: binary search
+import bisect
+sorted_list = [1, 3, 5, 7, 9, 11, 13, 15]
+index = bisect.bisect_left(sorted_list, 7)  # O(log n)
+print(f"7 is at index {index}")  # 3
+
+# O(n) — Linear: single loop
+def find_max(items):
+    maximum = items[0]
+    for item in items:          # O(n) — visits each once
+        if item > maximum:
+            maximum = item
+    return maximum
+
+# O(n log n) — Linearithmic: sorting
+sorted_data = sorted([5, 2, 8, 1, 9])  # O(n log n)
+
+# O(n²) — Quadratic: nested loops (AVOID for large data!)
+def has_duplicates_slow(items):
+    for i in range(len(items)):
+        for j in range(i + 1, len(items)):  # O(n²)
+            if items[i] == items[j]:
+                return True
+    return False
+
+# ✅ O(n) solution using set
+def has_duplicates_fast(items):
+    return len(items) != len(set(items))    # O(n)!
+
+# PRACTICAL GUIDE:
+# n=100     → O(n²) is fine
+# n=10,000  → O(n²) starts hurting (~1s)
+# n=1M      → O(n²) = ~11 days, O(n log n) = ~1s, O(n) = instant`,
+        tip: "🧠 O(1)=finding your seat by number. O(n)=searching row by row. O(n²)=comparing every person with every other. O(log n)=binary search the rows."
+      },
+      {
+        title: "Essential Algorithms",
+        content: "These patterns appear constantly in interviews, data processing, and AI systems.",
+        code: `# Two-pointer technique
+def two_sum(nums, target):
+    """Find two numbers that add up to target."""
+    seen = {}  # value → index
+    for i, num in enumerate(nums):
+        complement = target - num
+        if complement in seen:
+            return [seen[complement], i]
+        seen[num] = i
+
+print(two_sum([2, 7, 11, 15], 9))  # [0, 1]
+
+# Sliding window
+def max_sum_subarray(arr, k):
+    """Find max sum of k consecutive elements."""
+    window_sum = sum(arr[:k])
+    max_sum = window_sum
+    for i in range(k, len(arr)):
+        window_sum += arr[i] - arr[i - k]  # slide window
+        max_sum = max(max_sum, window_sum)
+    return max_sum
+
+print(max_sum_subarray([1, 4, 2, 10, 2, 3, 1, 0, 20], 4))  # 24
+
+# BFS — breadth-first search (shortest path)
+from collections import deque
+
+def bfs_shortest_path(graph, start, end):
+    queue = deque([(start, [start])])
+    visited = {start}
+    
+    while queue:
+        node, path = queue.popleft()
+        if node == end:
+            return path
+        for neighbor in graph.get(node, []):
+            if neighbor not in visited:
+                visited.add(neighbor)
+                queue.append((neighbor, path + [neighbor]))
+    return None
+
+graph = {
+    "A": ["B", "C"],
+    "B": ["D", "E"],
+    "C": ["F"],
+    "D": [], "E": ["F"], "F": []
+}
+print(bfs_shortest_path(graph, "A", "F"))  # ['A', 'C', 'F']
+
+# Binary search (for sorted data)
+def binary_search(arr, target):
+    left, right = 0, len(arr) - 1
+    while left <= right:
+        mid = (left + right) // 2
+        if arr[mid] == target:
+            return mid
+        elif arr[mid] < target:
+            left = mid + 1
+        else:
+            right = mid - 1
+    return -1`,
+        tip: "🧠 Two-pointer = two runners on a track. Sliding window = a spotlight moving across data. BFS = ripples spreading from a stone dropped in water."
+      }
+    ],
+    quiz: [
+      {
+        question: "What is the time complexity of looking up a key in a Python dict?",
+        options: ["O(n)", "O(log n)", "O(1)", "O(n²)"],
+        answer: 2,
+        explanation: "Python dicts use hash tables, giving O(1) average lookup time. This is why 'if key in dict' is so fast!"
+      },
+      {
+        question: "When should you use a deque instead of a list?",
+        options: ["For sorting", "For fast append/pop from both ends", "For random access", "For storing unique items"],
+        answer: 1,
+        explanation: "list.pop(0) is O(n) but deque.popleft() is O(1). Use deque for queues, sliding windows, and BFS."
+      }
+    ]
+  },
+  {
+    id: "python-for-genai",
+    title: "Python for Generative AI",
+    description: "Embeddings, vector stores, prompt engineering, LLM chains, and building production AI apps",
+    icon: Cpu,
+    tier: "Advanced",
+    tags: ["Embeddings", "LangChain", "Prompts", "Vector DB"],
+    sections: [
+      {
+        title: "Embeddings & Vector Similarity",
+        content: "Embeddings convert text to numbers so computers can understand **meaning**. Similar texts → similar vectors.",
+        code: `import numpy as np
+from typing import List
+
+# What are embeddings?
+# "king" → [0.2, 0.8, 0.1, ...]  (768 or 1536 numbers)
+# "queen" → [0.21, 0.79, 0.12, ...]  (very similar!)
+# "car" → [0.9, 0.1, 0.7, ...]  (very different)
+
+# Cosine similarity — how similar are two vectors?
+def cosine_similarity(a: List[float], b: List[float]) -> float:
+    a, b = np.array(a), np.array(b)
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+# Using OpenAI embeddings
+# from openai import OpenAI
+# client = OpenAI()
+# 
+# def get_embedding(text: str) -> List[float]:
+#     response = client.embeddings.create(
+#         input=text,
+#         model="text-embedding-3-small"
+#     )
+#     return response.data[0].embedding
+# 
+# emb1 = get_embedding("Python is great")
+# emb2 = get_embedding("I love Python programming")
+# emb3 = get_embedding("The weather is sunny")
+# 
+# print(cosine_similarity(emb1, emb2))  # ~0.89 (similar!)
+# print(cosine_similarity(emb1, emb3))  # ~0.45 (different)
+
+# Simple vector store
+class VectorStore:
+    def __init__(self):
+        self.documents = []
+        self.embeddings = []
+    
+    def add(self, text: str, embedding: List[float]):
+        self.documents.append(text)
+        self.embeddings.append(embedding)
+    
+    def search(self, query_embedding: List[float], top_k: int = 3):
+        similarities = [
+            cosine_similarity(query_embedding, emb)
+            for emb in self.embeddings
+        ]
+        top_indices = np.argsort(similarities)[-top_k:][::-1]
+        return [(self.documents[i], similarities[i]) for i in top_indices]`,
+        tip: "🧠 Embeddings are like GPS coordinates for meaning. 'Happy' and 'joyful' are close together. 'Happy' and 'sad' are far apart."
+      },
+      {
+        title: "Prompt Engineering Patterns",
+        content: "How you ask the LLM matters more than which model you use. Master these patterns for reliable AI output.",
+        code: `# Pattern 1: System + User messages
+messages = [
+    {"role": "system", "content": """You are a Python expert.
+Rules:
+- Always include type hints
+- Add docstrings to functions
+- Use modern Python 3.12 features
+- Be concise"""},
+    {"role": "user", "content": "Write a function to merge two dicts"}
+]
+
+# Pattern 2: Few-shot prompting (teach by example)
+messages = [
+    {"role": "system", "content": "Convert natural language to Python."},
+    {"role": "user", "content": "Sort a list of numbers"},
+    {"role": "assistant", "content": "sorted_numbers = sorted(numbers)"},
+    {"role": "user", "content": "Find unique items"},
+    {"role": "assistant", "content": "unique_items = list(set(items))"},
+    {"role": "user", "content": "Count word frequency"},
+    # LLM now follows the established pattern!
+]
+
+# Pattern 3: Chain of Thought
+prompt = """Solve step by step:
+Question: How many words with more than 5 letters are in this sentence?
+"The extraordinary programmer developed an incredible algorithm"
+
+Step 1: List each word and its length
+Step 2: Filter words > 5 letters
+Step 3: Count them
+
+Answer:"""
+
+# Pattern 4: Output formatting
+prompt = """Analyze this error and respond in JSON:
+Error: TypeError: 'NoneType' object is not subscriptable
+
+{
+    "error_type": "...",
+    "likely_cause": "...",
+    "fix": "...",
+    "code_example": "..."
+}"""
+
+# Pattern 5: Self-consistency (ask multiple times)
+import asyncio
+
+async def reliable_answer(question: str, n: int = 3):
+    """Ask the same question multiple times, pick majority answer."""
+    # responses = await asyncio.gather(*[
+    #     ask_llm(question, temperature=0.7) for _ in range(n)
+    # ])
+    # return most_common(responses)
+    pass`,
+        tip: "🧠 Prompt engineering is like managing a brilliant but literal intern — be specific, give examples, and tell them EXACTLY how to format the output."
+      },
+      {
+        title: "Building Production LLM Apps",
+        content: "Going from prototype to production requires **error handling, caching, rate limiting, and observability**.",
+        code: `import asyncio
+import hashlib
+import json
+import time
+from dataclasses import dataclass, field
+from functools import lru_cache
+
+@dataclass
+class LLMConfig:
+    model: str = "gpt-4o"
+    temperature: float = 0.7
+    max_tokens: int = 1000
+    max_retries: int = 3
+    timeout: float = 30.0
+
+class ProductionLLM:
+    """Production-ready LLM wrapper with retries, caching, and logging."""
+    
+    def __init__(self, config: LLMConfig):
+        self.config = config
+        self.cache: dict[str, str] = {}
+        self.total_tokens = 0
+        self.total_cost = 0.0
+    
+    def _cache_key(self, messages: list) -> str:
+        return hashlib.md5(
+            json.dumps(messages).encode()
+        ).hexdigest()
+    
+    async def complete(self, messages: list[dict]) -> str:
+        # Check cache first
+        key = self._cache_key(messages)
+        if key in self.cache:
+            print("📦 Cache hit!")
+            return self.cache[key]
+        
+        # Retry with exponential backoff
+        for attempt in range(self.config.max_retries):
+            try:
+                # response = await client.chat.completions.create(
+                #     model=self.config.model,
+                #     messages=messages,
+                #     temperature=self.config.temperature,
+                #     max_tokens=self.config.max_tokens,
+                # )
+                # result = response.choices[0].message.content
+                result = f"Response to: {messages[-1]['content'][:50]}"
+                
+                # Track usage
+                # self.total_tokens += response.usage.total_tokens
+                self.cache[key] = result
+                return result
+                
+            except Exception as e:
+                wait = 2 ** attempt
+                print(f"⚠️ Attempt {attempt+1} failed: {e}")
+                print(f"Retrying in {wait}s...")
+                await asyncio.sleep(wait)
+        
+        raise Exception("Max retries exceeded")
+    
+    def get_stats(self) -> dict:
+        return {
+            "total_tokens": self.total_tokens,
+            "cache_size": len(self.cache),
+            "estimated_cost": self.total_cost,
+        }
+
+# Usage
+llm = ProductionLLM(LLMConfig(model="gpt-4o", temperature=0))
+# result = await llm.complete([{"role": "user", "content": "Hello"}])`,
+        tip: "🧠 Production AI = prototype + caching + retries + logging + rate limiting + cost tracking. The LLM call is 10% of the work."
+      }
+    ],
+    quiz: [
+      {
+        question: "What does cosine similarity measure?",
+        options: ["String length difference", "Angle between two vectors (semantic similarity)", "Edit distance", "Token count"],
+        answer: 1,
+        explanation: "Cosine similarity measures the angle between vectors. Values range from -1 (opposite) to 1 (identical direction/meaning)."
+      },
+      {
+        question: "What is few-shot prompting?",
+        options: ["Using a small model", "Providing examples in the prompt", "Training on few data points", "Limiting response length"],
+        answer: 1,
+        explanation: "Few-shot = giving the LLM a few examples of input→output pairs so it learns the pattern before answering your actual question."
       }
     ]
   },
