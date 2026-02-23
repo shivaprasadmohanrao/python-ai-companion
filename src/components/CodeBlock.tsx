@@ -15,33 +15,42 @@ const CodeBlock = ({ code, language = "python" }: CodeBlockProps) => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Simple syntax highlighting
+  // Simple syntax highlighting using CSS classes to avoid regex conflicts
   const highlightCode = (code: string) => {
     return code
       .split("\n")
-      .map((line, i) => {
-        let highlighted = line
-          // Comments
-          .replace(/(#.*$)/gm, '<span class="text-muted-foreground/70 italic">$1</span>')
+      .map((line) => {
+        // First, escape HTML
+        let escaped = line
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+
+        // Apply highlighting with CSS classes (no inline hsl values that conflict with number regex)
+        let highlighted = escaped
+          // Comments first (highest priority)
+          .replace(/(#.*$)/gm, '<span class="syn-comment">$1</span>')
+          // Triple-quoted strings
+          .replace(/("""[\s\S]*?"""|'''[\s\S]*?''')/g, '<span class="syn-string">$1</span>')
           // Strings (double quotes)
-          .replace(/("(?:[^"\\]|\\.)*")/g, '<span style="color: hsl(35 92% 50%)">$1</span>')
-          // Strings (single quotes)
-          .replace(/('(?:[^'\\]|\\.)*')/g, '<span style="color: hsl(35 92% 50%)">$1</span>')
+          .replace(/("(?:[^"\\]|\\.)*")/g, '<span class="syn-string">$1</span>')
+          // Strings (single quotes)  
+          .replace(/('(?:[^'\\]|\\.)*')/g, '<span class="syn-string">$1</span>')
           // Keywords
           .replace(
             /\b(def|class|import|from|return|if|elif|else|for|while|try|except|finally|with|as|async|await|yield|raise|True|False|None|and|or|not|in|is|lambda|break|continue|pass|global|nonlocal)\b/g,
-            '<span style="color: hsl(160 84% 50%)">$1</span>'
+            '<span class="syn-keyword">$1</span>'
           )
           // Built-in functions
           .replace(
             /\b(print|len|range|type|isinstance|sorted|list|dict|set|tuple|int|float|str|bool|super|enumerate|zip|map|filter|open|getattr|setattr|hasattr)\b(?=\()/g,
-            '<span style="color: hsl(200 80% 65%)">$1</span>'
+            '<span class="syn-builtin">$1</span>'
           )
           // Decorators
-          .replace(/(@\w+)/g, '<span style="color: hsl(280 60% 65%)">$1</span>')
-          // Numbers
-          .replace(/\b(\d+\.?\d*)\b/g, '<span style="color: hsl(35 80% 60%)">$1</span>');
-        
+          .replace(/(@\w+)/g, '<span class="syn-decorator">$1</span>')
+          // Numbers (now safe — no inline styles to conflict with)
+          .replace(/(?<!["\w])(\b\d+\.?\d*\b)(?!["\w])/g, '<span class="syn-number">$1</span>');
+
         return highlighted;
       })
       .join("\n");
